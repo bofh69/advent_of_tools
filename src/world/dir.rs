@@ -101,4 +101,10 @@ impl Dir {
             _ => panic!("Direction {} is invalid", self),
         }
     }
+
+    /// Returns true for N, S, E and W.
+    pub fn is_cardinal(&self) -> bool {
+        use Dir::*;
+        matches!(*self, North | South | East | West)
+    }
 }
