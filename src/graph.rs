@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Sebastian Andersson <sebastian@bittr.nu>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::collections::HashMap;
 
 /// A graph with unidirectional edges
