@@ -1,2 +1,3 @@
-# advent_of_tools
-Common code for Advent of Code solutions
+# Advent of Tools
+
+Common code for my [Advent of Code](https://adventofcode.com/) solutions.
