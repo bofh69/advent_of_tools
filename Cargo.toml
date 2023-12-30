@@ -11,3 +11,5 @@ edition = "2021"
 
 [dependencies]
 num = "0.4.1"
+
+[workspace]

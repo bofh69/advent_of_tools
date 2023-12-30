@@ -2,101 +2,126 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#![warn(missing_docs)]
+
 use std::collections::HashMap;
 
 /// A graph with unidirectional edges
-pub struct UniGraph<NT, ET, Idx = u8, CT = u32>
+pub struct UniGraph<VT, ET, Idx = u8, CT = u32>
 where
     Idx: TryFrom<usize> + std::fmt::Debug,
-    NT: Clone,
+    VT: Clone,
     ET: Clone,
 {
-    pub nodes: Vec<(String, NT)>,
+    /// The graph's verices & their data
+    pub vertices: Vec<(String, VT)>,
+    /// The graph's edges, cost and data
     pub edges: HashMap<Idx, Vec<(Idx, CT, ET)>>,
 }
 
 /// A graph with bidirectional edges
-pub struct BiGraph<NT, ET, Idx = u8, CT = u32>
+pub struct BiGraph<VT, ET, Idx = u8, CT = u32>
 where
     Idx: TryFrom<usize> + std::fmt::Debug,
-    NT: Clone,
+    VT: Clone,
     ET: Clone,
 {
-    pub nodes: Vec<(String, NT)>,
+    /// The graph's verices & their data
+    pub vertices: Vec<(String, VT)>,
+    /// The graph's edges, cost and data
     pub edges: HashMap<Idx, Vec<(Idx, CT, ET)>>,
 }
 
-impl<NT, ET, Idx, CT> UniGraph<NT, ET, Idx, CT>
+/// Data about a vertex and its edges.
+///
+/// Each vertex has some data attached to it as well as the edge.
+type GraphData<'a, VT, ET> = (&'a str, VT, Vec<(&'a str, ET)>);
+
+impl<VT, ET, Idx, CT> UniGraph<VT, ET, Idx, CT>
 where
     Idx: TryFrom<usize> + std::fmt::Debug + Eq + std::hash::Hash,
     <Idx as TryFrom<usize>>::Error: std::fmt::Debug,
-    NT: Clone,
+    VT: Clone,
     ET: Clone,
 {
-    pub fn new<CF>(cost_func: CF, data: &[(&str, NT, Vec<(&str, ET)>)]) -> Self
+    /// Create a graph from a list of edges & data
+    ///
+    /// cost_func takes the vertex's data and the edge's to create a cost
+    pub fn new<CF>(cost_func: CF, data: &[GraphData<'_, VT, ET>]) -> Self
     where
-        CF: Fn(&NT, &ET) -> CT,
+        CF: Fn(&VT, &ET) -> CT,
     {
-        let mut nodes = Vec::new();
+        let mut vertices = Vec::new();
         let mut edges = HashMap::new();
-        let mut nodename_to_idx = HashMap::new();
+        let mut vertexname_to_idx = HashMap::new();
 
-        for (node, node_data, _) in data {
-            nodename_to_idx.insert(node, nodes.len());
+        for (vertex, vertex_data, _) in data {
+            vertexname_to_idx.insert(vertex, vertices.len());
             edges.insert(
-                Idx::try_from(nodes.len()).expect("Node# fits Idx"),
+                Idx::try_from(vertices.len()).expect("Node# fits Idx"),
                 Vec::new(),
             );
-            nodes.push((node.to_string(), node_data.clone()));
+            vertices.push((vertex.to_string(), vertex_data.clone()));
         }
 
-        for (node, _, node_edges) in data {
-            let node = nodename_to_idx.get(node).expect("Node exists");
-            for (edge, edge_data) in node_edges {
-                let edge = nodename_to_idx.get(edge).expect("edge destination exists");
+        for (vertex, _, vertex_edges) in data {
+            let vertex = vertexname_to_idx.get(vertex).expect("Node exists");
+            for (edge, edge_data) in vertex_edges {
+                let edge = vertexname_to_idx
+                    .get(edge)
+                    .expect("edge destination exists");
                 let edges = edges
-                    .get_mut(&Idx::try_from(*node).expect("Idx fits"))
+                    .get_mut(&Idx::try_from(*vertex).expect("Idx fits"))
                     .expect("Node exists");
                 edges.push((
                     Idx::try_from(*edge).expect("Fits"),
-                    cost_func(&nodes[*node].1, edge_data),
+                    cost_func(&vertices[*vertex].1, edge_data),
                     edge_data.clone(),
                 ));
             }
         }
 
-        UniGraph { nodes, edges }
+        UniGraph { vertices, edges }
     }
 }
 
-impl<NT, ET, Idx, CT> BiGraph<NT, ET, Idx, CT>
+impl<VT, ET, Idx, CT> BiGraph<VT, ET, Idx, CT>
 where
     Idx: TryFrom<usize> + std::fmt::Debug + Eq + std::hash::Hash,
     <Idx as TryFrom<usize>>::Error: std::fmt::Debug,
-    NT: Clone,
+    VT: Clone,
     ET: Clone,
 {
-    pub fn compress<F>(unigraph: UniGraph<NT, ET, Idx, CT>, should_combine: F) -> Self
+    /// Takes a unigraph and compresses it.
+    ///
+    /// Edges are made bidirectional before compression by copying edges.
+    ///
+    /// The should_combine function returns the new data and cost for two edges
+    /// if the given vertex and its two edges are to be removed.
+    pub fn compress<F>(unigraph: UniGraph<VT, ET, Idx, CT>, should_combine: F) -> Self
     where
-        F: Fn(&NT, &NT, &NT, &ET, CT, &ET, CT) -> Option<(CT, ET)>,
+        F: Fn(&VT, &VT, &VT, &ET, CT, &ET, CT) -> Option<(CT, ET)>,
         Idx: Into<usize> + Copy,
         CT: Copy,
     {
+        // TODO: Split into From & compress as separate functions?
+        // TODO: Add a new function?
+
         let mut graph = BiGraph {
-            nodes: unigraph.nodes,
+            vertices: unigraph.vertices,
             edges: HashMap::new(),
         };
 
         // Add edges in both directions
-        for (from_node, old_list) in unigraph.edges {
-            for (node2, cost, edge_data) in &old_list {
-                let list2 = graph.edges.entry(from_node).or_insert_with(Vec::new);
-                if !list2.iter().any(|(node, _, _)| node == node2) {
-                    list2.push((*node2, *cost, edge_data.clone()));
+        for (from_vertex, old_list) in unigraph.edges {
+            for (vertex2, cost, edge_data) in &old_list {
+                let list2 = graph.edges.entry(from_vertex).or_insert_with(Vec::new);
+                if !list2.iter().any(|(vertex, _, _)| vertex == vertex2) {
+                    list2.push((*vertex2, *cost, edge_data.clone()));
                 }
-                let list2 = graph.edges.entry(*node2).or_insert_with(Vec::new);
-                if !list2.iter().any(|(node, _, _)| *node == from_node) {
-                    list2.push((from_node, *cost, edge_data.clone()));
+                let list2 = graph.edges.entry(*vertex2).or_insert_with(Vec::new);
+                if !list2.iter().any(|(vertex, _, _)| *vertex == from_vertex) {
+                    list2.push((from_vertex, *cost, edge_data.clone()));
                 }
             }
         }
@@ -106,48 +131,48 @@ where
 
             // HashMap<Idx, Vec<(Idx, CT, &'a ET)>>,
             let mut update = None;
-            'find_edge: for (node1, edges) in &graph.edges {
+            'find_edge: for (vertex1, edges) in &graph.edges {
                 if edges.len() != 2 {
                     continue;
                 }
-                for (node2, cost, edge_data) in edges {
-                    for (node3, cost3, edge_data3) in edges {
-                        if node3 == node2 {
+                for (vertex2, cost, edge_data) in edges {
+                    for (vertex3, cost3, edge_data3) in edges {
+                        if vertex3 == vertex2 {
                             continue;
                         }
                         if let Some((cost, data)) = should_combine(
-                            &graph.nodes[Idx::into(*node1)].1,
-                            &graph.nodes[Idx::into(*node2)].1,
-                            &graph.nodes[Idx::into(*node3)].1,
+                            &graph.vertices[Idx::into(*vertex1)].1,
+                            &graph.vertices[Idx::into(*vertex2)].1,
+                            &graph.vertices[Idx::into(*vertex3)].1,
                             edge_data,
                             *cost,
                             edge_data3,
                             *cost3,
                         ) {
-                            update = Some((*node1, *node2, *node3, (cost, data)));
+                            update = Some((*vertex1, *vertex2, *vertex3, (cost, data)));
                             any_change = true;
                             break 'find_edge;
                         }
                     }
                 }
             }
-            if let Some((node_to_remove, node1, node2, cost_and_data)) = update {
-                graph.edges.remove(&node_to_remove);
+            if let Some((vertex_to_remove, vertex1, vertex2, cost_and_data)) = update {
+                graph.edges.remove(&vertex_to_remove);
 
-                // Update edges at node1 from node_to_remove to node2
-                let list = graph.edges.get_mut(&node1).expect("edge list");
-                for (node, cost, data) in list.iter_mut() {
-                    if *node == node_to_remove {
-                        *node = node2;
+                // Update edges at vertex1 from vertex_to_remove to vertex2
+                let list = graph.edges.get_mut(&vertex1).expect("edge list");
+                for (vertex, cost, data) in list.iter_mut() {
+                    if *vertex == vertex_to_remove {
+                        *vertex = vertex2;
                         *cost = cost_and_data.0;
                         *data = cost_and_data.1.clone();
                     }
                 }
-                // Update edges at node2 from node_to_remove to node1
-                let list = graph.edges.get_mut(&node2).expect("edge list");
-                for (node, cost, data) in list.iter_mut() {
-                    if *node == node_to_remove {
-                        *node = node1;
+                // Update edges at vertex2 from vertex_to_remove to vertex1
+                let list = graph.edges.get_mut(&vertex2).expect("edge list");
+                for (vertex, cost, data) in list.iter_mut() {
+                    if *vertex == vertex_to_remove {
+                        *vertex = vertex1;
                         *cost = cost_and_data.0;
                         *data = cost_and_data.1.clone();
                     }
@@ -162,24 +187,24 @@ where
     }
 }
 
-impl<NT, ET, Idx, CT> std::fmt::Debug for UniGraph<NT, ET, Idx, CT>
+impl<VT, ET, Idx, CT> std::fmt::Debug for UniGraph<VT, ET, Idx, CT>
 where
     Idx: TryFrom<usize> + Into<usize> + std::fmt::Debug + Copy,
-    NT: std::fmt::Debug + Clone,
+    VT: std::fmt::Debug + Clone,
     ET: std::fmt::Debug + Clone,
     CT: std::fmt::Debug,
 {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         writeln!(fmt, "UniGraph {{")?;
-        for (from_node, list) in &self.edges {
-            for (node, cost, data) in list {
+        for (from_vertex, list) in &self.edges {
+            for (vertex, cost, data) in list {
                 writeln!(
                     fmt,
                     "  {} -({:?}, {:?})> {}",
-                    self.nodes[(*from_node).into()].0,
+                    self.vertices[(*from_vertex).into()].0,
                     cost,
                     data,
-                    self.nodes[(*node).into()].0
+                    self.vertices[(*vertex).into()].0
                 )?;
             }
         }
@@ -187,24 +212,24 @@ where
     }
 }
 
-impl<NT, ET, Idx, CT> std::fmt::Debug for BiGraph<NT, ET, Idx, CT>
+impl<VT, ET, Idx, CT> std::fmt::Debug for BiGraph<VT, ET, Idx, CT>
 where
     Idx: TryFrom<usize> + Into<usize> + std::fmt::Debug + Copy,
-    NT: std::fmt::Debug + Clone,
+    VT: std::fmt::Debug + Clone,
     ET: std::fmt::Debug + Clone,
     CT: std::fmt::Debug,
 {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         writeln!(fmt, "BiGraph {{")?;
-        for (from_node, list) in &self.edges {
-            for (node, cost, data) in list {
+        for (from_vertex, list) in &self.edges {
+            for (vertex, cost, data) in list {
                 writeln!(
                     fmt,
                     "  {} -({:?}, {:?})> {}",
-                    self.nodes[(*from_node).into()].0,
+                    self.vertices[(*from_vertex).into()].0,
                     cost,
                     data,
-                    self.nodes[(*node).into()].0
+                    self.vertices[(*vertex).into()].0
                 )?;
             }
         }
