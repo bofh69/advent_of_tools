@@ -2,18 +2,24 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#![warn(missing_docs)]
+
 type Length = i32;
 
 use super::dir::Dir;
 use num::*;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+/// Point is a 2D point in space.
 pub struct Point<T = Length> {
+    /// x is the position along the x-axis.
     pub x: T,
+    /// y is the position along the y-axis.
     pub y: T,
 }
 
 impl<T: Signed + Copy> Point<T> {
+    /// Walks one step in the given direction and returns the new Point.
     pub fn walk(self, dir: Dir) -> Self {
         match dir {
             Dir::None => Self {
@@ -55,6 +61,7 @@ impl<T: Signed + Copy> Point<T> {
         }
     }
 
+    /// Calculates the manhattan distance (|x| + |y|) between this and another point.
     pub fn manhattan_distance(&self, other: Self) -> T {
         T::abs(&(self.x - other.x)) + T::abs(&(self.y - other.y))
     }

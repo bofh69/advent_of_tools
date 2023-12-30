@@ -2,8 +2,15 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#![warn(missing_docs)]
+
+/// Dir is the 8 primary directions, plus None.
 #[derive(Hash, Eq, PartialEq, Copy, Clone, Debug)]
+#[allow(missing_docs)]
 pub enum Dir {
+    /// No direction
+    ///
+    /// Used mainly to have an end for iterators
     None,
     North,
     South,
@@ -37,6 +44,7 @@ impl std::fmt::Display for Dir {
 }
 
 impl Dir {
+    /// Returns a new direction after turning 45 degrees to the right.
     pub fn turn_right(self) -> Self {
         use Dir::*;
         match self {
@@ -52,6 +60,7 @@ impl Dir {
         }
     }
 
+    /// Returns a new direction after turning 45 degrees to the left.
     pub fn turn_left(self) -> Self {
         use Dir::*;
         match self {
@@ -67,6 +76,7 @@ impl Dir {
         }
     }
 
+    /// Returns a new direction after turning 90 degrees left.
     pub fn turn_cardinal_left(self) -> Self {
         use Dir::*;
         match self {
@@ -79,6 +89,7 @@ impl Dir {
         }
     }
 
+    /// Returns a new direction after turning 90 degrees right.
     pub fn turn_cardinal_right(self) -> Self {
         use Dir::*;
         match self {
