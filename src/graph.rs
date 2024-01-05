@@ -89,8 +89,9 @@ impl<VT, ET, Idx, CT> BiGraph<VT, ET, Idx, CT>
 where
     Idx: TryFrom<usize> + std::fmt::Debug + Eq + std::hash::Hash,
     <Idx as TryFrom<usize>>::Error: std::fmt::Debug,
-    VT: Clone,
-    ET: Clone,
+    VT: Clone + std::fmt::Debug,
+    ET: Clone + std::fmt::Debug,
+    CT: Clone + std::fmt::Debug,
 {
     /// Takes a unigraph and compresses it.
     ///
@@ -183,7 +184,36 @@ where
                 break;
             }
         }
-        graph
+
+        // Compress vertices
+        let translate_numbers : HashMap<_, _> =
+            graph.edges.keys().enumerate().map(|(n, k)| (k, n)).collect();
+
+        let mut comp_vertices = Vec::with_capacity(translate_numbers.len());
+
+        for i in 0..translate_numbers.len() {
+            for j in 0..graph.vertices.len() {
+                if Some(&i) == translate_numbers.get(&Idx::try_from(j).unwrap()) {
+                    comp_vertices.push(graph.vertices[j].clone());
+                }
+            }
+        }
+
+        let comp_edges : HashMap<_, _> = graph.edges.iter().map(|(from_vertex, list)| {
+            (
+                Idx::try_from(*translate_numbers.get(from_vertex).unwrap()).unwrap(),
+                list.iter().map(|(to_vertex, c, e)|
+                    (
+                        Idx::try_from(*translate_numbers.get(to_vertex).unwrap()).unwrap(),
+                        *c, e.clone())
+                    ).collect::<Vec<_>>()
+            )
+        }).collect();
+
+        Self {
+            vertices: comp_vertices,
+            edges: comp_edges,
+        }
     }
 }
 
@@ -200,8 +230,9 @@ where
             for (vertex, cost, data) in list {
                 writeln!(
                     fmt,
-                    "  {} -({:?}, {:?})> {}",
+                    "  {} ({:?}) -({:?}, {:?})-> {}",
                     self.vertices[(*from_vertex).into()].0,
+                    self.vertices[(*from_vertex).into()].1,
                     cost,
                     data,
                     self.vertices[(*vertex).into()].0
@@ -225,8 +256,9 @@ where
             for (vertex, cost, data) in list {
                 writeln!(
                     fmt,
-                    "  {} -({:?}, {:?})> {}",
+                    "  {} ({:?}) -({:?}, {:?})> {}",
                     self.vertices[(*from_vertex).into()].0,
+                    self.vertices[(*from_vertex).into()].1,
                     cost,
                     data,
                     self.vertices[(*vertex).into()].0
