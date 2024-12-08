@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 Sebastian Andersson <sebastian@bittr.nu>
+// SPDX-FileCopyrightText: 2024 Sebastian Andersson <sebastian@bittr.nu>
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -17,6 +17,7 @@ pub trait LengthType:
 {
 }
 
+impl LengthType for i8 {}
 impl LengthType for i16 {}
 impl LengthType for i32 {}
 impl LengthType for i64 {}
