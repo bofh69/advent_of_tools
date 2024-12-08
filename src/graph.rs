@@ -186,8 +186,12 @@ where
         }
 
         // Compress vertices
-        let translate_numbers : HashMap<_, _> =
-            graph.edges.keys().enumerate().map(|(n, k)| (k, n)).collect();
+        let translate_numbers: HashMap<_, _> = graph
+            .edges
+            .keys()
+            .enumerate()
+            .map(|(n, k)| (k, n))
+            .collect();
 
         let mut comp_vertices = Vec::with_capacity(translate_numbers.len());
 
@@ -199,16 +203,24 @@ where
             }
         }
 
-        let comp_edges : HashMap<_, _> = graph.edges.iter().map(|(from_vertex, list)| {
-            (
-                Idx::try_from(*translate_numbers.get(from_vertex).unwrap()).unwrap(),
-                list.iter().map(|(to_vertex, c, e)|
-                    (
-                        Idx::try_from(*translate_numbers.get(to_vertex).unwrap()).unwrap(),
-                        *c, e.clone())
-                    ).collect::<Vec<_>>()
-            )
-        }).collect();
+        let comp_edges: HashMap<_, _> = graph
+            .edges
+            .iter()
+            .map(|(from_vertex, list)| {
+                (
+                    Idx::try_from(*translate_numbers.get(from_vertex).unwrap()).unwrap(),
+                    list.iter()
+                        .map(|(to_vertex, c, e)| {
+                            (
+                                Idx::try_from(*translate_numbers.get(to_vertex).unwrap()).unwrap(),
+                                *c,
+                                e.clone(),
+                            )
+                        })
+                        .collect::<Vec<_>>(),
+                )
+            })
+            .collect();
 
         Self {
             vertices: comp_vertices,
