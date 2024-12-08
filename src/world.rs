@@ -85,7 +85,7 @@ where
     }
 }
 
-impl<'a, T: LengthType> Iterator for MapIterator<'a, T>
+impl<T: LengthType> Iterator for MapIterator<'_, T>
 where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: std::fmt::Debug,
@@ -131,7 +131,7 @@ where
     }
 }
 
-impl<'a, T: LengthType> Iterator for MapNeighborIterator<'a, T>
+impl<T: LengthType> Iterator for MapNeighborIterator<'_, T>
 where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: std::fmt::Debug,
@@ -500,5 +500,31 @@ where
             }
         }
         Zero::zero()
+    }
+}
+
+impl<'a, T: LengthType> IntoIterator for &'a Map<T>
+where
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: std::fmt::Debug,
+{
+    type Item = (Point<T>, u8);
+    type IntoIter = MapIterator<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn test_into_iter() {
+        let map = super::Map::new(2, 3);
+        let mut count = 0;
+        for (_p, _c) in &map {
+            count += 1;
+        }
+        assert_eq!(count, 6);
     }
 }
