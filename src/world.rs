@@ -465,20 +465,43 @@ where
         }
     }
 
-    pub fn flood_cardinal_with<F>(&mut self, pos: Point<T>, f: &mut F)
+    /// flood fill the map from point `pos`.
+    ///
+    /// `is_ok_f` says if it is ok to fill the position,
+    /// `tile_f` says what it should be filled with.
+    ///
+    /// Only fills via the cardinal directions from each position.
+    ///
+    /// # Example:
+    /// ```
+    /// # use advent_of_tools::*;
+    ///
+    /// // The map is:
+    /// // ###.#
+    /// // #.#..
+    /// // #.###
+    /// let mut map = Map::<i32>::from_string("###.#\n#.#..\n#.###\n");
+    ///
+    /// map.flood_cardinal_with(Point{x: 0, y: 2}, &mut |_pos, t| t == b'#', &mut |_pos, _tile| b'!');
+    ///
+    /// assert_eq!(map.get_at_unchecked(Point{x: 4, y: 2}), b'!');
+    /// assert_eq!(map.get_at_unchecked(Point{x: 4, y: 0}), b'#');
+    /// ```
+    pub fn flood_cardinal_with<O, F>(&mut self, pos: Point<T>, is_ok_f: &mut O, tile_f: &mut F)
     where
-        F: FnMut(Point<T>, u8) -> Option<u8>,
+        O: FnMut(Point<T>, u8) -> bool,
+        F: FnMut(Point<T>, u8) -> u8,
     {
-        if f(pos, self.get_at_unchecked(pos)).is_none() {
+        if !is_ok_f(pos, self.get_at_unchecked(pos)) {
             // Nothing to fill here
             return;
         }
-        let min_pos = self.walk_until(pos, Dir::West, |pos, c| f(pos, c).is_none());
-        let max_pos = self.walk_until(pos, Dir::East, |pos, c| f(pos, c).is_none());
+        let min_pos = self.walk_until(pos, Dir::West, |pos, c| !is_ok_f(pos, c));
+        let max_pos = self.walk_until(pos, Dir::East, |pos, c| !is_ok_f(pos, c));
 
         let mut pos = min_pos;
         while pos.x <= max_pos.x {
-            let val = f(pos, self.get_at_unchecked(pos)).expect("value");
+            let val = tile_f(pos, self.get_at_unchecked(pos));
             self.set_at(pos, val);
             pos = pos.walk(Dir::East);
         }
@@ -486,11 +509,11 @@ where
         while pos.x <= max_pos.x {
             pos.y -= One::one();
             if pos.y >= Zero::zero() {
-                self.flood_cardinal_with(pos, f);
+                self.flood_cardinal_with(pos, is_ok_f, tile_f);
             }
             pos.y = pos.y + One::one() + One::one();
             if pos.y < self.get_height() {
-                self.flood_cardinal_with(pos, f);
+                self.flood_cardinal_with(pos, is_ok_f, tile_f);
             }
             pos.y -= One::one();
             pos = pos.walk(Dir::East);
