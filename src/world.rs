@@ -402,9 +402,26 @@ where
         pos
     }
 
-    /// flood fill the map from point pos with val
-    /// Only fills north, south, east and west of each position
-    pub fn flood_cardinal(&mut self, pos: Point<T>, empty: u8, val: u8) {
+    /// flood fill the map from point `pos` with `tile`.
+    ///
+    /// Only fills via the cardinal directions from each position.
+    ///
+    /// # Example:
+    /// ```
+    /// # use advent_of_tools::*;
+    ///
+    /// // The map is:
+    /// // ###.#
+    /// // #.#..
+    /// // #.###
+    /// let mut map = Map::<i32>::from_string("###.#\n#.#..\n#.###\n");
+    ///
+    /// map.flood_cardinal(Point{x: 0, y: 2}, b'#', b'!');
+    ///
+    /// assert_eq!(map.get_at_unchecked(Point{x: 4, y: 2}), b'!');
+    /// assert_eq!(map.get_at_unchecked(Point{x: 4, y: 0}), b'#');
+    /// ```
+    pub fn flood_cardinal(&mut self, pos: Point<T>, empty: u8, tile: u8) {
         if self.get_at_unchecked(pos) != empty {
             // Nothing to fill here
             return;
@@ -414,18 +431,18 @@ where
 
         let mut pos = min_pos;
         while pos.x <= max_pos.x {
-            self.set_at(pos, val);
+            self.set_at(pos, tile);
             pos = pos.walk(Dir::East);
         }
         pos = min_pos;
         while pos.x <= max_pos.x {
             pos.y -= One::one();
-            if pos.y > Zero::zero() {
-                self.flood_cardinal(pos, empty, val);
+            if pos.y >= Zero::zero() {
+                self.flood_cardinal(pos, empty, tile);
             }
             pos.y = pos.y + One::one() + One::one();
             if pos.y < self.get_height() {
-                self.flood_cardinal(pos, empty, val);
+                self.flood_cardinal(pos, empty, tile);
             }
             pos.y -= One::one();
             pos = pos.walk(Dir::East);
