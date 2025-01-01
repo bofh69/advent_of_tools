@@ -207,25 +207,41 @@ where
         }
     }
 
-    pub fn add_boarder(&mut self, val: u8) {
+    /// Add a border around the map.
+    ///
+    /// The map will grow in size and all tiles within the map will have a new position,
+    /// one higher in x and y.
+    ///
+    /// The border will be filled with the given tile.
+    ///
+    /// # Example
+    /// ```
+    /// # use advent_of_tools::*;
+    /// let mut map = Map::new(10, 20);
+    ///
+    /// assert_eq!(map.get_at(Point{x: 0, y: 2}), Some(b'.'));
+    /// map.add_border(b'*');
+    /// assert_eq!(map.get_at(Point{x: 0, y: 2}), Some(b'*'));
+    /// ```
+    pub fn add_border(&mut self, tile: u8) {
         for y in range(Zero::zero(), self.get_height()) {
-            self.set_at(Point { x: Zero::zero(), y }, val);
+            self.set_at(Point { x: Zero::zero(), y }, tile);
             self.set_at(
                 Point {
                     x: self.get_width() - One::one(),
                     y,
                 },
-                val,
+                tile,
             );
         }
         for x in range(Zero::zero(), self.get_width()) {
-            self.set_at(Point { x, y: Zero::zero() }, val);
+            self.set_at(Point { x, y: Zero::zero() }, tile);
             self.set_at(
                 Point {
                     x,
                     y: self.get_height() - One::one(),
                 },
-                val,
+                tile,
             );
         }
     }
