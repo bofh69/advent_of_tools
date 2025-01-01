@@ -20,6 +20,14 @@ pub struct Point<T = Length> {
 
 impl<T: Signed + Copy> Point<T> {
     /// Walks one step in the given direction and returns the new Point.
+    ///
+    /// # Example:
+    /// ```
+    /// # use advent_of_tools::*;
+    /// let pos = Point{x: 2, y: 7};
+    /// let new_pos = pos.walk(Dir::NorthEast);
+    /// assert_eq!(new_pos, Point{x: 3, y: 6});
+    /// ```
     pub fn walk(self, dir: Dir) -> Self {
         match dir {
             Dir::None => Self {
@@ -62,6 +70,21 @@ impl<T: Signed + Copy> Point<T> {
     }
 
     /// Calculates the manhattan distance (|x| + |y|) between this and another point.
+    ///
+    /// # Example:
+    ///
+    /// ```
+    /// # use advent_of_tools::*;
+    ///
+    /// let p1 = Point {x: 5, y: 7};
+    /// let p2 = Point {x: 2, y: 9};
+    ///
+    /// // The distance is symetrical:
+    /// assert_eq!(p1.manhattan_distance(p2), p2.manhattan_distance(p1));
+    ///
+    /// // The distance is three in x and 2 in y.
+    /// assert_eq!(p1.manhattan_distance(p2), 3 + 2);
+    /// ```
     pub fn manhattan_distance(&self, other: Self) -> T {
         T::abs(&(self.x - other.x)) + T::abs(&(self.y - other.y))
     }
