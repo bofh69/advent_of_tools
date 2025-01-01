@@ -48,6 +48,13 @@ impl std::fmt::Display for Dir {
 
 impl Dir {
     /// Returns a new direction after turning 45 degrees to the right.
+    ///
+    /// # Example
+    /// ```
+    /// # use advent_of_tools::Dir;
+    /// assert_eq!(Dir::NorthWest.turn_right(), Dir::North);
+    /// assert_eq!(Dir::North.turn_right(), Dir::NorthEast);
+    /// ```
     pub fn turn_right(self) -> Self {
         use Dir::*;
         match self {
@@ -64,6 +71,13 @@ impl Dir {
     }
 
     /// Returns a new direction after turning 45 degrees to the left.
+    ///
+    /// # Example
+    /// ```
+    /// # use advent_of_tools::Dir;
+    /// assert_eq!(Dir::NorthWest.turn_left(), Dir::West);
+    /// assert_eq!(Dir::North.turn_left(), Dir::NorthWest);
+    /// ```
     pub fn turn_left(self) -> Self {
         use Dir::*;
         match self {
@@ -80,6 +94,13 @@ impl Dir {
     }
 
     /// Returns a new direction after turning 90 degrees left.
+    ///
+    /// # Example
+    /// ```
+    /// # use advent_of_tools::Dir;
+    /// assert_eq!(Dir::North.turn_cardinal_left(), Dir::West);
+    /// assert_eq!(Dir::East.turn_cardinal_left(), Dir::North);
+    /// ```
     pub fn turn_cardinal_left(self) -> Self {
         use Dir::*;
         match self {
@@ -93,6 +114,13 @@ impl Dir {
     }
 
     /// Returns a new direction after turning 90 degrees right.
+    ///
+    /// # Example
+    /// ```
+    /// # use advent_of_tools::Dir;
+    /// assert_eq!(Dir::South.turn_cardinal_right(), Dir::West);
+    /// assert_eq!(Dir::West.turn_cardinal_right(), Dir::North);
+    /// ```
     pub fn turn_cardinal_right(self) -> Self {
         use Dir::*;
         match self {
@@ -106,6 +134,15 @@ impl Dir {
     }
 
     /// Returns true for N, S, E and W.
+    ///
+    /// # Example
+    /// ```
+    /// # use advent_of_tools::{Dir, CARDINALS};
+    /// for dir in CARDINALS {
+    ///     assert!(dir.is_cardinal());
+    /// }
+    /// assert!(! Dir::NorthWest.is_cardinal());
+    /// ```
     pub fn is_cardinal(&self) -> bool {
         use Dir::*;
         matches!(*self, North | South | East | West)
