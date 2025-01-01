@@ -88,3 +88,26 @@ impl std::ops::Sub for Point {
         }
     }
 }
+
+impl<T> std::ops::Mul<T> for Point<T>
+where
+    T: std::ops::Mul<T, Output = T>,
+    T: Copy,
+{
+    type Output = Self;
+
+    /// Multiply the point with a number.
+    ///
+    /// # Example:
+    /// ```
+    /// # use advent_of_tools::*;
+    /// let p = Point {x: -2, y: 3};
+    /// assert_eq!(p * -2, Point {x: 4, y: -6});
+    /// ```
+    fn mul(self, other: T) -> Self::Output {
+        Self {
+            x: self.x.mul(other),
+            y: self.y.mul(other),
+        }
+    }
+}
