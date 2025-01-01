@@ -25,7 +25,7 @@ impl LengthType for i128 {}
 
 mod dir;
 mod point;
-pub use dir::Dir;
+pub use dir::*;
 use num::*;
 pub use point::Point;
 

@@ -22,6 +22,9 @@ pub enum Dir {
     SouthWest,
 }
 
+/// An array of the cardinal directions
+pub const CARDINALS: [Dir; 4] = [Dir::North, Dir::East, Dir::South, Dir::West];
+
 impl std::fmt::Display for Dir {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use Dir::*;
